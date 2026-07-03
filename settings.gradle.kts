@@ -23,6 +23,7 @@ dependencyResolutionManagement {
 rootProject.name = "understory-common"
 include(":common-security")
 include(":common-backup")
+include(":elevation")
 include(":overlay-i2p")
 include(":overlay-lokinet")
 include(":overlay-yggdrasil")
