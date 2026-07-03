@@ -34,8 +34,8 @@ package com.understory.security
  * vetoed slot, or only on a roadmap does NOT qualify — leave the peer's
  * capability set empty until the surface ships. Names describe the
  * delivered power at its true cadence and mechanism, never an aspiration
- * (no REALTIME_* for an on-demand scanner; no *_FILTER/*_ORCHESTRATOR for
- * something that only reads or advises).
+ * (no "realtime scanner" name for an on-demand scanner; no "filter" or
+ * "orchestrator" name for something that only reads or advises).
  */
 enum class SuiteCapability {
     /**
