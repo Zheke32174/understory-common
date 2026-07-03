@@ -22,7 +22,8 @@ Android security apps: [passgen](https://github.com/Zheke32174/understory-passge
 - `keystore/` — pinned suite **debug** keystore (intentionally committed; see its
   README). Its cert digest IS the suite pin.
 - `docs/` — SUITE_DESIGN, SUITE_ROADMAP, RELEASE_BLOCKERS (the definition of
-  "done" for v1), REVIEW-NOTES, SAMSUNG_QUIRKS, OVERLAY_NETWORKS, sandbox notes.
+  "done" for v1), THREAT_MODEL, SUITE_THREAT_SURFACES, BUILD_REPRODUCIBILITY,
+  SIGNING, CREDITS, REVIEW-NOTES, SAMSUNG_QUIRKS, OVERLAY_NETWORKS, sandbox notes.
 - `tests/blackarch/` — the BlackArch defense matrix + per-threat runbooks.
 
 ## Model

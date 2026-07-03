@@ -35,10 +35,11 @@ apksigner sign --ks attacker.jks --ks-pass pass:attacker passgen.apk 2>/dev/null
 ATTACK_DIGEST=$(apksigner verify --print-certs passgen.apk 2>&1 \
     | grep "SHA-256 digest" | head -1 | awk '{print $NF}')
 
-# Read the pinned digest from Tamper.kt.
-PINNED=$(grep -oE '[a-f0-9]{64}' \
-    /home/user/understory/android/common-security/src/main/java/com/understory/security/Tamper.kt \
-    | head -1)
+# Read the pinned digest from SuitePins.kt. This test re-signs a debug
+# build, so the debug pin is the one the runtime check would enforce.
+PINNED=$(grep -A1 'DEBUG_CERT_SHA256' \
+    /home/user/understory/android/common-security/src/main/java/com/understory/security/SuitePins.kt \
+    | grep -oE '[a-f0-9]{64}' | head -1)
 
 if [[ "$ATTACK_DIGEST" != "$PINNED" ]] && [[ -n "$ATTACK_DIGEST" ]]; then
     echo "  PASS — re-signed cert ($ATTACK_DIGEST)"
