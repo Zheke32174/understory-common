@@ -30,8 +30,9 @@ class RecoveryKeyCodecTest {
         val raw = ByteArray(VaultRecovery.RECOVERY_KEY_BYTES) { (it * 7).toByte() }
         val canonical = RecoveryKeyCodec.encode(raw)
         val grouped = RecoveryKeyCodec.grouped(canonical)
-        // Grouped form has hyphens; normalize removes them back to canonical.
-        assertTrue(grouped.contains('-'))
+        // Grouped form is space-separated (a '-' would collide with the
+        // URL-safe base64 alphabet); normalize strips spaces back to canonical.
+        assertTrue(grouped.contains(' '))
         val normalized = RecoveryKeyCodec.normalize(grouped.toCharArray())
         assertArrayEquals(canonical, normalized)
         // And decoding the grouped form yields the original bytes.

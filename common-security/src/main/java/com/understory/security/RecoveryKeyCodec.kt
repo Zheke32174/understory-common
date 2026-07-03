@@ -8,9 +8,12 @@ package com.understory.security
  *     [Crypto.generateMasterPassword]'s existing base64-url alphabet so the
  *     suite has one recovery-string shape. Best for copy/paste and SAF export.
  *   - **grouped transcription form** — the same base64 broken into
- *     [GROUP_LEN]-char groups joined by `-` (e.g.
- *     `k9Fh-2mQ0-...`). Easier to read aloud or copy onto paper without losing
- *     place; hyphens and whitespace are cosmetic.
+ *     [GROUP_LEN]-char groups joined by a space (e.g.
+ *     `k9Fh 2mQ0 ...`). Easier to read aloud or copy onto paper without losing
+ *     place; the spaces are cosmetic. A space separator (not `-`) is required
+ *     because the URL-safe base64 alphabet itself contains `-` as a data
+ *     character, so a `-` separator would be ambiguous and corrupt the
+ *     round-trip; whitespace never appears in base64 and is collision-proof.
  *
  * The canonical stored/derived form is base64-no-pad (URL-safe alphabet). The
  * grouped form is purely presentational: [normalize] strips the grouping back
@@ -61,17 +64,18 @@ object RecoveryKeyCodec {
     fun grouped(chars: CharArray): String {
         val sb = StringBuilder(chars.size + chars.size / GROUP_LEN)
         for (i in chars.indices) {
-            if (i > 0 && i % GROUP_LEN == 0) sb.append('-')
+            if (i > 0 && i % GROUP_LEN == 0) sb.append(' ')
             sb.append(chars[i])
         }
         return sb.toString()
     }
 
     /**
-     * Strip grouping (hyphens + all whitespace) from a user-entered key,
-     * returning the canonical base64 char form. Idempotent for already-canonical
-     * input. The caller owns [chars]; the returned array is a fresh copy the
-     * caller must wipe.
+     * Strip grouping (all whitespace) from a user-entered key, returning the
+     * canonical base64 char form. Only whitespace is stripped — NOT `-`, which
+     * is a data character in the URL-safe base64 alphabet. Idempotent for
+     * already-canonical input. The caller owns [chars]; the returned array is a
+     * fresh copy the caller must wipe.
      */
     fun normalize(chars: CharArray): CharArray {
         // Count kept chars first so we allocate exactly once (no intermediate
@@ -84,5 +88,5 @@ object RecoveryKeyCodec {
         return out
     }
 
-    private fun isSeparator(c: Char): Boolean = c == '-' || c.isWhitespace()
+    private fun isSeparator(c: Char): Boolean = c.isWhitespace()
 }
