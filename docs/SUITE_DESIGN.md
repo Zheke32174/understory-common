@@ -1,8 +1,141 @@
 # Understory Suite — design + roadmap
 
-**Status (current)**
+> **V2 (2026-07-03): read the V2 section immediately below FIRST.** The
+> coexistence doctrine is now normative, the roster/status table is corrected
+> to audit reality (what actually works vs. what is alpha/broken), and the
+> execution plan lives in `docs/design-v2/RELEASE-PLAN-V2.md`. Everything after
+> the V2 section is the durable pre-V2 design record, preserved unchanged as
+> the "why these choices" history — but where a pre-V2 statement conflicts with
+> V2, **V2 governs.** In particular the pre-V2 table below said all seven apps
+> "shipped"; the V2 audit found that means "code-complete v1 skeleton," not
+> "shippable" — see the corrected table in the V2 section.
+
+---
+
+# V2 (2026-07-03) — NORMATIVE
+
+## V2 coexistence doctrine (normative)
+
+This section supersedes any earlier positioning language. It is the pasted,
+normative form of `docs/design-v2/suite-coexistence.md §2` (source of truth for
+edits). Every V2 design doc conforms to it.
+
+> ### Coexistence doctrine
+>
+> **CD-1 · Complement, don't replace.** Every understory app must add value
+> NEXT TO the app the user already runs for that purpose. If a feature's value
+> depends on the incumbent being absent, disabled, or evicted, the feature is
+> misdesigned. Reference-device incumbent set (Samsung SM-S948U, One UI):
+> Tailscale (VPN), Bitwarden/1Password (autofill + password vault),
+> Chrome/Brave (default browser), Aegis/Google Authenticator (TOTP), Samsung
+> Secure Folder (file isolation), Play Protect (malware), Samsung
+> Keyboard/Gboard (IME), Google One/Smart Switch (device backup).
+>
+> **CD-2 · Slot policy.** Scarce single-owner Android surfaces: the VPN slot
+> (VpnService), the active autofill service, default-app roles (browser/SMS/
+> assistant/home), the accessibility service, the notification-listener
+> binding, device admin, and the usage-stats grant.
+> (a) **The VPN slot is permanently VETOED.** Tailscale holds it. No
+> understory feature may require, request, or be designed around VpnService —
+> including "temporary" tunnels, DNS-redirect via a fake resolver route, and
+> overlay-network transports (Yggdrasil/Lokinet-as-TUN). Packet-level engines
+> may exist only as an explicitly-labelled, default-off "Standalone (no
+> Tailscale)" mode, gated on detecting that no other VPN is active, and never
+> as the primary verb.
+> (b) **No feature may REQUIRE any other scarce slot.** A slot may be offered
+> only as an explicit opt-in, and every opt-in must degrade gracefully: with
+> the slot ungranted the app still delivers its core value, shows an honest
+> status line naming who holds the slot ("Autofill: Bitwarden — passgen is in
+> keyboard mode"), and renders no dead control and no re-enable nag against the
+> incumbent.
+> (c) **Multi-enable surfaces are the preferred delivery channels** — the IME
+> list, the system share-sheet, and "Open with…" choosers are additive by
+> construction. Never set an IME as default programmatically; never prompt for
+> a default-app role; never call an API that evicts a slot's current owner.
+> (d) **An incumbent holding or reclaiming a slot is a STEADY STATE, not an
+> error.** UI renders it neutrally or positively (green "coexisting"), never as
+> a fault to "fix". Specifically: the firewall must never render a
+> Tailscale-took-the-slot event as "preempted — Re-enable".
+>
+> **CD-3 · Incumbent-interop policy (import AND export).** Wherever the
+> incumbent category has an established interchange format, understory apps
+> speak it in **both directions**. Minimum format set by category:
+> - Passwords: Bitwarden CSV **and** Bitwarden JSON (`items[].type==1`), Google
+>   Password Manager CSV, Proton Pass CSV/JSON — import and export.
+> - TOTP: Aegis JSON (plain; encrypted scrypt slots when feasible),
+>   `otpauth://` URI lists, `otpauth-migration://` (import), 2FAS JSON —
+>   import; `otpauth://` list + QR render — export.
+> - Files: plain bytes via SAF (`ACTION_OPEN_DOCUMENT`/`ACTION_CREATE_DOCUMENT`)
+>   — universal, no lock-in, both directions.
+> - Backups: the suite `BackupEnvelope` is the one at-rest export format; a
+>   passphrase/recovery-key path makes it restorable off-device.
+>
+> **An app that ingests a secret class but offers no user-reachable export of
+> it is a roach motel and does not ship.** Export must be a real, reachable UI
+> action — not a dead adapter class.
+>
+> **CD-4 · Honest-UI policy.** (a) Zero dead controls: no button/switch/toggle/
+> picker whose action cannot complete on this build of this device — remove,
+> disable-with-reason, or eng-gate it. (b) Zero capability overclaim: UI copy,
+> notifications, manifest comments, READMEs, roadmap rows, launcher labels, and
+> suite capability beacons may claim only what the shipped code does today.
+> (c) Failure honesty: every silent dead-end gets a visible, truthful message.
+> (d) Status honesty: primary status surfaces never overstate active
+> enforcement/protection; a green derived from an unreadable setting degrades to
+> "unknown". (e) Cleanup honesty: clipboard auto-clear / "session cleared" /
+> shred claims must match the implementation's real guarantees, including
+> behavior across process death and OEM clipboard policy.
+>
+> **CD-5 · Names are claims.** Launcher labels, store names, and capability
+> beacons are subject to CD-4(b). A name that asserts a capability the app lacks
+> ("antivirus" for a static auditor; "firewall" for an advisor that blocks
+> nothing) is an overclaim; a name that collides with the incumbent it
+> complements ("aegis" beside Aegis Authenticator) contradicts CD-1 by
+> construction.
+
+## V2 app roster / status — corrected to audit reality
+
+The pre-V2 table (further down) marked every app "shipped." The V2 audit
+(`docs/audit-v2/`) found that meant "v1 code-complete skeleton," and that each
+app has ship-blocking gaps — most commonly **one-way data flow** (secrets check
+in, nothing checks out) and **claims ahead of code**. Corrected status:
+
+| # | app | codename | V2 store face | Honest v1 state | Top ship-blocker(s) |
+|---|-----|----------|---------------|-----------------|---------------------|
+| 1 | passgen | passgen | **Understory Keys** | ALPHA — generator works; vault is a roach motel; generate-without-record is a lockout trap | no export; fictional reset; receipt ledger missing |
+| 2 | aegis | aegis | **Understory OTP** | ALPHA — **generates WRONG codes** for non-SHA1/6/30; no export; name collides with Aegis Authenticator | OTP correctness; export; IME unviable under lock-on-leave; rename |
+| 3 | firewall | firewall | **Understory Net Audit** | BROKEN under doctrine — enforcement core needs the vetoed VPN slot; evicts Tailscale + nags to evict it back | reposition to observe/advise + guarded Standalone; drop VPN-core UI |
+| 4 | backups | backups | **Understory Backup** | ALPHA — envelope encrypt works; **no restore decoder** for `.usbs`; scheduling impossible; orchestration is a stub | build restore; framing fix; honest scheduling; beacon de-overclaim |
+| 5 | browser | browser | **Understory Safe View** | ALPHA — hardening is real; **no doorway (share-target) or exit**; "Clear session" lies; I2P over-claims | intake interstitial; honest Clear; proxy shrink |
+| 6 | antivirus | antivirus | **Understory APK Check** | ALPHA — isolated parser is sound; **abuser rules never fire**; empty KnownBad; false-green Play Protect; static, not "real-time" | real abuser detection; signed blocklist; kill false-green; rename |
+| 7 | vault-folder | vaultfolder | **Understory File Vault** | ALPHA — **export crashes** (the one confirmed hard crash); no viewer; no recovery; deposit auto-encrypts vs a claimed confirm | crash fix; recovery; deposit confirm; viewer |
+| 8 | sandbox | — | — | **phase 2** | vfone-class container — see below |
+| 9 | (defensive toolkit) | — | — | **phase 3** | runtime observation in sandbox — see below |
+
+Suite-wide V2 defects that cut across all seven (`audit-v2/SUITE.md`): biometric
+re-enrollment bricks all four vaults (three of four have no recovery UI); four
+separate cloned vault engines; seven hardcoded-hex dark themes with 1–2-entry
+`strings.xml`; three capability beacons that claim powers nobody delivers;
+main-thread crypto/IO across five apps. All are addressed by the shared-infra
+wave (`design-v2/RELEASE-PLAN-V2.md §1`).
+
+**V2 execution plan:** `docs/design-v2/RELEASE-PLAN-V2.md` (waves + per-app
+FIX/REDESIGN/DROP checklists + operator decisions). **V2 definition of done:**
+`docs/RELEASE_BLOCKERS_V2.md` (supersedes the pre-V2 `RELEASE_BLOCKERS.md`).
+**V2 per-app + shared designs:** `docs/design-v2/*.md`.
+
+---
+
+# Pre-V2 design record (durable history — V2 governs on conflict)
+
+**Status (pre-V2, retained as history)**
 
 **7 of 9 target apps ship.** Final 8th (sandbox) lands in phase 2; final 9th (defensive toolkit) lands in phase 3.
+
+> NOTE (V2): "shipped" below means v1 code-complete, not shippable — see the
+> corrected V2 roster above. The role descriptions here are the pre-V2 framing;
+> several are overclaims the V2 store faces correct ("firewall"→Net Audit,
+> "antivirus"→APK Check, the VpnService gate→observe/advise + guarded Standalone).
 
 | # | app | status | role |
 |---|-----|--------|------|
