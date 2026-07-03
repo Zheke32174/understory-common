@@ -136,8 +136,9 @@ Encrypted local file vault.
   - Broad cross-app deposit filter on MainActivity `ACTION_VIEW`
     (`application/octet-stream`, `application/json`, `text/plain`,
     `text/csv`, `image/*`, `application/pdf`): any app can hand it a
-    file. Deposit still requires biometric unlock + explicit user
-    confirmation before the file is encrypted in.
+    file. Each deposit requires biometric unlock and an explicit
+    per-file deposit-confirm interstitial (metadata only, no content
+    render) before the file is encrypted in.
   - SAF streams for import/export.
 - **Parsers:** none over deposit content — incoming files are treated
   as opaque bytes and encrypted as-is (the deliberate design: no

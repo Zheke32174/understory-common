@@ -708,11 +708,13 @@ biometric-gated open.
   storage as passgen.
 
 ### Permissions
-- `READ_MEDIA_IMAGES` / `READ_MEDIA_VIDEO` / `READ_MEDIA_AUDIO`
-  *only when explicitly importing*. We use ACTION_GET_CONTENT (no
-  permission) wherever possible.
-- `POST_NOTIFICATIONS` — completion of long imports.
-- Otherwise comms-stripped.
+- `USE_BIOMETRIC` — the only non-stripped permission (BiometricPrompt
+  releases the Keystore-bound key that wraps the vault master).
+- No `READ_MEDIA_*`: import/export is SAF-only (`OpenDocument` /
+  `CreateDocument`), which needs no storage or media permission.
+- No `POST_NOTIFICATIONS`: vault-folder has no notification surface.
+- Otherwise comms-stripped — the shipped manifest `tools:node="remove"`s
+  the media, notification, and network permission set (A19).
 
 ### Core UI flows
 1. **First-run** → BiometricPrompt-gated vault creation, same as
@@ -728,8 +730,12 @@ biometric-gated open.
 5. **Export file** → BiometricPrompt → SAF picker → write decrypted.
 
 ### Cross-app interactions
-- **backups** — vault-folder exposes `BackupProvider` like the others.
-  Files in the folder are part of the suite-wide backup.
+- **backups** — vault-folder does NOT expose a `BackupProvider`; the
+  `common-backup` module is not vendored here, so there is no
+  suite-wide backup hook today. The honest off-device path is the
+  per-file recovery-key export (SAF), plus a designed-not-built
+  "send encrypted copy to Backup" hand-off (design-v2 §4.4) gated on
+  `common-backup` being adopted.
 
 ### Distribution constraints
 - F-Droid: easy.
@@ -945,7 +951,7 @@ The whole suite's user-visible permissions, by app:
 | firewall | INTERNET, ACCESS_NETWORK_STATE, FOREGROUND_SERVICE, FOREGROUND_SERVICE_SPECIAL_USE, POST_NOTIFICATIONS |
 | backups | POST_NOTIFICATIONS, WAKE_LOCK, RECEIVE_BOOT_COMPLETED |
 | browser | INTERNET, ACCESS_NETWORK_STATE, READ_MEDIA_*, POST_NOTIFICATIONS |
-| vault-folder | USE_BIOMETRIC, POST_NOTIFICATIONS |
+| vault-folder | USE_BIOMETRIC |
 | messenger | READ_SMS, RECEIVE_SMS, SEND_SMS (opt-in), READ_PHONE_NUMBERS, POST_NOTIFICATIONS |
 | antivirus | QUERY_ALL_PACKAGES, RECEIVE_BOOT_COMPLETED, POST_NOTIFICATIONS |
 | mdm-local | QUERY_ALL_PACKAGES, POST_NOTIFICATIONS |
