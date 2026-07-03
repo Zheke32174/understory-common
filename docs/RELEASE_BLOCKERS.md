@@ -73,12 +73,12 @@ after all (defer to v2), move it to the `Deferred` section with reasoning.
       2026-07-02 split repos — flag verified `false` in
       `common-security/.../TestingMode.kt`; every Activity sets
       FLAG_SECURE again. On-device retest tracked under Multi-device
-      above. (SHA recorded at commit time)
+      above. (wave-1 2026-07-03: understory-common 62abf4b; per-app wave-1 commits in each repo log)
 
 - [x] **Flip `TestingMode.KEEP_ALIVE_ON_LEAVE = false`.** resolved
       2026-07-02 split repos — flag verified `false`; vault-bearing
       apps lock + destroy on user-leave again. On-device retest
-      tracked under Multi-device above. (SHA recorded at commit time)
+      tracked under Multi-device above. (wave-1 2026-07-03: understory-common 62abf4b; per-app wave-1 commits in each repo log)
 
 - [x] **Re-add `android:excludeFromRecents="true"`.** resolved
       2026-07-02 split repos — re-added on every vault-bearing
@@ -88,7 +88,7 @@ after all (defer to v2), move it to the `Deferred` section with reasoning.
       firewall MainActivity; launchMode kept singleTask. browser and
       antivirus MainActivities intentionally remain recents-visible
       (no vault material on screen; browser's ephemeral-session
-      leave/return flow needs recents). (SHA recorded at commit time)
+      leave/return flow needs recents). (wave-1 2026-07-03: understory-common 62abf4b; per-app wave-1 commits in each repo log)
 
 - [x] **Real release keystore created and used for signing release
       builds.** resolved 2026-07-02 split repos — offline PKCS12
@@ -103,21 +103,21 @@ after all (defer to v2), move it to the `Deferred` section with reasoning.
       in `SuitePins.kt` (`RELEASE_CERT_SHA256 = 59a3dee7…46a45c4a`,
       variant-selected by BuildConfig.DEBUG); Tamper/SuiteAttestation/
       SuiteCapabilityRegistry all read `SuitePins.EXPECTED_CERT_SHA256`.
-      (SHA recorded at commit time)
+      (wave-1 2026-07-03: understory-common 62abf4b; per-app wave-1 commits in each repo log)
 
 - [x] **Gradle build-time assertion: keystore SHA-256 must match the
       pin.** resolved 2026-07-02 split repos — root `verifyCertPin`
       task in every app repo runs after every `assemble*`, greps both
       digests from `SuitePins.kt`, extracts the APK signer digest via
       `apksigner`, and hard-fails on mismatch (drift vs. compromise
-      caught at sign time). (SHA recorded at commit time)
+      caught at sign time). (wave-1 2026-07-03: understory-common 62abf4b; per-app wave-1 commits in each repo log)
 
 - [x] **`-PrequireSignedRelease=true` enforced on release builds.**
       resolved 2026-07-02 split repos — `verifyCertPin` refuses any
       unsigned release APK under the flag; the `release-check` CI job
       (workflow_dispatch) runs `assembleRelease verifyCertPin
       -PrequireSignedRelease=true`, and `SIGNING.md` mandates the flag
-      on every publication build. (SHA recorded at commit time)
+      on every publication build. (wave-1 2026-07-03: understory-common 62abf4b; per-app wave-1 commits in each repo log)
 
 - [x] **Reproducible-build recipe documented.** resolved 2026-07-02
       split repos — `BUILD_REPRODUCIBILITY.md` written: toolchain pins
@@ -125,7 +125,7 @@ after all (defer to v2), move it to the `Deferred` section with reasoning.
       SDK/build-tools 35, no NDK), rebuild steps, compare-minus-
       signature procedure, and honest divergence caveats. The actual
       independent rebuild demonstration remains open (see Open).
-      (SHA recorded at commit time)
+      (wave-1 2026-07-03: understory-common 62abf4b; per-app wave-1 commits in each repo log)
 
 - [x] **`SUITE_THREAT_SURFACES.md` written.** resolved 2026-07-02
       split repos — per-app sheet for all seven apps (inputs from
@@ -155,7 +155,7 @@ after all (defer to v2), move it to the `Deferred` section with reasoning.
       stripped INTERNET permission as the actual kill-switch (config
       comments record why an empty `<trust-anchors/>` is not a valid
       deny-all construct); browser additionally pins trust to the
-      system store only (no user CAs). (SHA recorded at commit time)
+      system store only (no user CAs). (wave-1 2026-07-03: understory-common 62abf4b; per-app wave-1 commits in each repo log)
 
 - [x] **`android:exported` audit.** resolved 2026-07-02 split repos —
       verified across all seven manifests: exported components are
@@ -174,7 +174,7 @@ after all (defer to v2), move it to the `Deferred` section with reasoning.
       no app requests (permanently locked), `grantUriPermissions`
       false, and it attests package+version only (consumers map
       version→capabilities locally, so a repackaged peer can't claim
-      powers). (SHA recorded at commit time)
+      powers). (wave-1 2026-07-03: understory-common 62abf4b; per-app wave-1 commits in each repo log)
 
 - [x] **Firewall phase B → phase 1.5 decision.** resolved 2026-07-02
       split repos — honest-labelling chosen: DNS selection UI says
@@ -182,7 +182,7 @@ after all (defer to v2), move it to the `Deferred` section with reasoning.
       Private DNS only" (MainActivity strings + FirewallSettings), and
       the tun-level `DnsRedirector` exists as an explicitly-unclaimed
       phase-3 preview; release-qualifying real DNS enforcement stays a
-      phase-2 item, not a v1 blocker. (SHA recorded at commit time)
+      phase-2 item, not a v1 blocker. (wave-1 2026-07-03: understory-common 62abf4b; per-app wave-1 commits in each repo log)
 
 - [x] **Hardened WebView config implemented.** resolved 2026-07-02
       split repos — browser MainActivity implements the full phase-1
@@ -193,7 +193,7 @@ after all (defer to v2), move it to the `Deferred` section with reasoning.
       camera/mic auto-denied, no form save, SSL errors hard-fail, no
       popups/file-chooser, cookies+storage wiped on destroy. Browser
       ships in v1 as this hardened standalone; Cromite-class engine
-      stays phase 2. (SHA recorded at commit time)
+      stays phase 2. (wave-1 2026-07-03: understory-common 62abf4b; per-app wave-1 commits in each repo log)
 
 - [x] **Threat model doc.** resolved 2026-07-02 split repos —
       `docs/THREAT_MODEL.md` written: defend (lost device, runtime
