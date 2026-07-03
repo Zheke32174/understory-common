@@ -4,6 +4,27 @@ Owning modules: `common-security` (recovery contract, reset flow, Keystore
 lifecycle) and `common-backup` (envelope export/import, codecs). Adopted per
 app by **passgen, aegis, vault-folder, backups**.
 
+> ## ⛔ THREAT-MODEL INVARIANT — NO RECOVERY SECRET ON SCREEN (corrected 2026-07-03)
+> The value that can decrypt a recovery backup (recovery key / recovery
+> passphrase) **MUST NEVER be rendered on screen** — not as text, not grouped
+> for transcription, not as a QR code, not revealed "just once." The screen is
+> the leak (camera / Van-Eck emanation); `FLAG_SECURE` blocks screenshots and
+> casting but does **not** stop a nearby camera or electromagnetic capture.
+> This overrides any earlier text in this doc that describes "minting a random
+> recovery key and rendering it."
+>
+> **The only sanctioned delivery is a USER-SUPPLIED recovery PASSPHRASE:** the
+> user types a passphrase into a masked field (they supply their own secret —
+> the accepted password-entry pattern — not the app emanating a stored one).
+> That passphrase encrypts the recovery/export file (`AesGcmPassphraseCodec`,
+> Argon2id) and is what the user types on restore. Nothing generated is shown.
+> `VaultRecovery.recoveryKeyFrom(userChars)` already produces the escrow key
+> from a passphrase, so the contract needs no change — only the enrollment UI.
+> Consistency rule: encrypt and decrypt with the SAME transform (aegis uses the
+> raw passphrase both ways via `VaultImportScreen`; vault-folder uses
+> `recoveryKeyFrom` — normalized — both ways). `RecoveryKeyCodec.grouped()` is a
+> display formatter and MUST NOT be called; slated for removal.
+
 Scope: the four vault-bearing apps each carry a *clone* of the same v2 vault
 engine (SUITE.md §3): a random 32-byte KEK wrapped by an auth-bound Keystore
 key (`Crypto.ensureDeviceAuthKey`, `Crypto.kt:144-170`). This document
