@@ -1,0 +1,36 @@
+apiVersion: modos.pleiades/v1alpha1
+kind: Component
+metadata:
+  name: understory-mobile-common
+  repository: Zheke32174/understory-common
+  visibility: public
+  lifecycle: operational
+  defaultBranch: main
+spec:
+  roles:
+    - shared-mobile-library
+    - common-security-primitives
+    - android-component-contracts
+  authority: none
+  inputs:
+    - mobile-application-requirements
+    - shared-data-models
+    - security-and-ui-contracts
+  outputs:
+    - reusable-mobile-libraries
+    - shared-schemas
+    - compatibility-artifacts
+  capabilitiesProvided:
+    - library.mobile.common
+    - schema.mobile.shared
+    - security.mobile.primitives
+  capabilitiesRequired:
+    - build.android.library
+    - test.mobile.compatibility
+  dataClasses:
+    - public
+    - private
+    - untrusted
+  failurePolicy: non-operational
+  promotionPolicy: signed-pr
+  notes: Shared code provides mechanisms only; application-specific authority and sensitive data remain outside the common library.
