@@ -1,0 +1,59 @@
+name: Validate shared-code propagation
+
+on:
+  push:
+    paths:
+      - tools/sync-common.sh
+      - tools/test-sync-common.sh
+      - .github/workflows/validate-sync-common.yml
+      - common-security/**
+      - common-backup/**
+      - overlay-i2p/**
+      - overlay-lokinet/**
+      - overlay-yggdrasil/**
+      - keystore/**
+      - lint.xml
+  pull_request:
+    paths:
+      - tools/sync-common.sh
+      - tools/test-sync-common.sh
+      - .github/workflows/validate-sync-common.yml
+      - common-security/**
+      - common-backup/**
+      - overlay-i2p/**
+      - overlay-lokinet/**
+      - overlay-yggdrasil/**
+      - keystore/**
+      - lint.xml
+
+permissions:
+  contents: read
+
+jobs:
+  propagation-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Verify required host commands
+        run: |
+          set -euo pipefail
+          command -v bash
+          command -v git
+          command -v rsync
+          command -v realpath
+          command -v sha256sum
+          command -v shellcheck
+
+      - name: Parse and lint scripts
+        run: |
+          set -euo pipefail
+          bash -n tools/sync-common.sh
+          bash -n tools/test-sync-common.sh
+          shellcheck tools/sync-common.sh tools/test-sync-common.sh
+
+      - name: Exercise refusal, dry-run, deletion, and receipt behavior
+        run: bash tools/test-sync-common.sh
