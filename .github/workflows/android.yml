@@ -1,34 +1,38 @@
-name: Android signing containment repair
+name: Android shared-code validation
 
 on:
   pull_request:
+  push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: understory-common-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  repair:
-    if: github.head_ref == 'security/public-signing-containment-v1'
+  validate:
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: security/public-signing-containment-v1
-          fetch-depth: 0
-      - name: Apply bounded containment repair
-        run: python tools/apply-public-signing-containment.py
-      - name: Verify repair boundary
-        run: |
-          set -euo pipefail
-          test ! -e keystore/debug.keystore
-          python ci/validate-public-signing-boundary.py
-          git diff --check
-      - name: Commit and remove repair authority
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Contain public debug signing identity"
-          git push origin HEAD:security/public-signing-containment-v1
+          persist-credentials: false
+          show-progress: false
+      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92
+        with:
+          gradle-version: '8.10.2'
+          cache-provider: basic
+      - name: Validate public signing boundary
+        run: python ci/validate-public-signing-boundary.py
+      - name: Install Android SDK components
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-35" "build-tools;35.0.0" > /dev/null
+      - name: Unit tests
+        run: gradle --no-daemon testDebugUnitTest
