@@ -1,59 +1,39 @@
-name: Validate shared-code propagation
+name: Apply public signing containment
 
 on:
-  push:
-    paths:
-      - tools/sync-common.sh
-      - tools/test-sync-common.sh
-      - .github/workflows/validate-sync-common.yml
-      - common-security/**
-      - common-backup/**
-      - overlay-i2p/**
-      - overlay-lokinet/**
-      - overlay-yggdrasil/**
-      - keystore/**
-      - lint.xml
   pull_request:
+    branches: [main]
     paths:
-      - tools/sync-common.sh
-      - tools/test-sync-common.sh
+      - tools/apply-public-signing-containment.py
       - .github/workflows/validate-sync-common.yml
       - common-security/**
-      - common-backup/**
-      - overlay-i2p/**
-      - overlay-lokinet/**
-      - overlay-yggdrasil/**
       - keystore/**
-      - lint.xml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  propagation-contract:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+  repair:
+    if: github.head_ref == 'security/public-signing-containment-v1'
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 1
-
-      - name: Verify required host commands
+          ref: security/public-signing-containment-v1
+          fetch-depth: 0
+      - name: Apply bounded containment repair
+        run: python tools/apply-public-signing-containment.py
+      - name: Verify repair boundary
         run: |
           set -euo pipefail
-          command -v bash
-          command -v git
-          command -v rsync
-          command -v realpath
-          command -v sha256sum
-          command -v shellcheck
-
-      - name: Parse and lint scripts
+          test ! -e keystore/debug.keystore
+          python ci/validate-public-signing-boundary.py
+          git diff --check
+      - name: Commit and remove repair authority
         run: |
           set -euo pipefail
-          bash -n tools/sync-common.sh
-          bash -n tools/test-sync-common.sh
-          shellcheck tools/sync-common.sh tools/test-sync-common.sh
-
-      - name: Exercise refusal, dry-run, deletion, and receipt behavior
-        run: bash tools/test-sync-common.sh
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Contain public debug signing identity"
+          git push origin HEAD:security/public-signing-containment-v1
