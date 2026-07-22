@@ -1,5 +1,6 @@
 name: Apply public signing containment
 
+# One-shot draft-branch repair; self-removes after committing the bounded result.
 on:
   push:
     branches: [security/public-signing-containment-v1]
