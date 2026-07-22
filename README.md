@@ -1,45 +1,41 @@
 # understory-common
 
-Canonical home of the **Understory Suite** shared code and suite-level docs.
+Canonical home of the **Understory Suite** shared Android code and suite-level security documentation.
 
-The Understory Suite is a coordinated set of rootless, in-bounds, local-first
-Android security apps: [passgen](https://github.com/Zheke32174/understory-passgen),
-[aegis](https://github.com/Zheke32174/understory-aegis),
-[firewall](https://github.com/Zheke32174/understory-firewall),
-[vault-folder](https://github.com/Zheke32174/understory-vault-folder),
-[antivirus](https://github.com/Zheke32174/understory-antivirus),
-[backups](https://github.com/Zheke32174/understory-backups),
-[browser](https://github.com/Zheke32174/understory-browser).
+> [!WARNING]
+> The former suite-wide debug signing private key remained committed after these repositories became public. That key is now public and cannot establish authorship, tamper resistance, sibling identity, or capability authority. Debug APKs are untrusted development artifacts. See [`docs/PUBLIC_DEBUG_SIGNING_INCIDENT.md`](docs/PUBLIC_DEBUG_SIGNING_INCIDENT.md).
+
+The public suite currently includes:
+
+- [Understory OTP](https://github.com/Zheke32174/understory-aegis)
+- [Passgen](https://github.com/Zheke32174/understory-passgen)
+- [Vault Folder](https://github.com/Zheke32174/understory-vault-folder)
+- [Antivirus](https://github.com/Zheke32174/understory-antivirus)
+- [Backups](https://github.com/Zheke32174/understory-backups)
+- [Browser](https://github.com/Zheke32174/understory-browser)
+
+The firewall component is not advertised as public until a reviewed public repository and distribution boundary exist.
 
 ## Contents
 
-- `common-security/` — Tamper (signature pin + hook detection), SuiteAttestation
-  (cross-app cert mesh), Totp/Hotp, SecureButton (tap-jack filtering), A11yProbe,
-  DeviceProfile, Diagnostics, TestingMode, Crypto.
-- `common-backup/` — encrypted backup envelope + streaming AES-GCM codecs.
-- `overlay-i2p/`, `overlay-lokinet/`, `overlay-yggdrasil/` — overlay-network
-  providers used by firewall + browser.
-- `keystore/` — pinned suite **debug** keystore (intentionally committed; see its
-  README). Its cert digest IS the suite pin.
-- `docs/` — SUITE_DESIGN, SUITE_ROADMAP, RELEASE_BLOCKERS (the definition of
-  "done" for v1), THREAT_MODEL, SUITE_THREAT_SURFACES, BUILD_REPRODUCIBILITY,
-  SIGNING, CREDITS, REVIEW-NOTES, SAMSUNG_QUIRKS, OVERLAY_NETWORKS, sandbox notes.
-- `tests/blackarch/` — the BlackArch defense matrix + per-threat runbooks.
+- `common-security/` — tamper heuristics, release-signature verification, release-only sibling attestation, TOTP/HOTP, secure UI helpers, diagnostics, and cryptographic utilities.
+- `common-backup/` — encrypted backup envelopes and streaming AES-GCM codecs.
+- `overlay-i2p/`, `overlay-lokinet/`, `overlay-yggdrasil/` — optional overlay-network providers.
+- `docs/` — suite design, threat model, release blockers, signing doctrine, reproducibility, audits, and incident records.
+- `tests/blackarch/` — defensive test matrix and runbooks.
 
-## Model
+## Trust boundary
 
-Each app repo **vendors** the shared modules it needs (identical relative paths)
-so every app builds self-contained with no submodule/token plumbing. This repo is
-the single place shared code is *edited*; `tools/sync-common.sh` propagates to the
-app repos:
+Local debug builds use each developer's ordinary Android debug identity. They are buildable and testable, but they are not authenticated suite distributions and cannot unlock trusted cross-app capabilities.
 
-```bash
-tools/sync-common.sh ../understory-aegis ../understory-passgen ../understory-firewall \
-  ../understory-vault-folder ../understory-antivirus ../understory-backups ../understory-browser
-```
+The only certificate recognized as the suite distribution identity is the offline release certificate recorded in `common-security/src/main/java/com/understory/security/SuitePins.kt`. Its private key must remain outside every repository and ordinary CI.
 
-CI here runs the shared modules' unit tests on every push.
+## Shared-code model
+
+Each app vendors the shared modules it needs so it can build without submodule credentials. Shared code is edited here and propagated with `tools/sync-common.sh`.
+
+CI validates shared code and verifies that no private signing key or debug trust pin re-enters the public tree. CI does not publish APK releases.
 
 ## Provenance
 
-Split 2026-07-02 from `Zheke32174/underward` `android/` (commit `f867493`).
+Split on 2026-07-02 from the private `Zheke32174/underward` Android tree at commit `f867493`. The public signing-boundary correction is tracked in issue #3.

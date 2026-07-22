@@ -1,43 +1,46 @@
 name: Validate shared-code propagation
 
 on:
-  push:
-    paths:
-      - tools/sync-common.sh
-      - tools/test-sync-common.sh
-      - .github/workflows/validate-sync-common.yml
-      - common-security/**
-      - common-backup/**
-      - overlay-i2p/**
-      - overlay-lokinet/**
-      - overlay-yggdrasil/**
-      - keystore/**
-      - lint.xml
   pull_request:
     paths:
       - tools/sync-common.sh
       - tools/test-sync-common.sh
-      - .github/workflows/validate-sync-common.yml
       - common-security/**
       - common-backup/**
       - overlay-i2p/**
       - overlay-lokinet/**
       - overlay-yggdrasil/**
       - keystore/**
-      - lint.xml
+      - ci/validate-public-signing-boundary.py
+      - .github/workflows/validate-sync-common.yml
+  push:
+    branches: [main]
+    paths:
+      - tools/sync-common.sh
+      - tools/test-sync-common.sh
+      - common-security/**
+      - common-backup/**
+      - overlay-i2p/**
+      - overlay-lokinet/**
+      - overlay-yggdrasil/**
+      - keystore/**
+      - ci/validate-public-signing-boundary.py
+      - .github/workflows/validate-sync-common.yml
 
 permissions:
   contents: read
 
 jobs:
   propagation-contract:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 1
-
+          persist-credentials: false
+          show-progress: false
+      - name: Verify public signing boundary
+        run: python ci/validate-public-signing-boundary.py
       - name: Verify required host commands
         run: |
           set -euo pipefail
@@ -47,13 +50,11 @@ jobs:
           command -v realpath
           command -v sha256sum
           command -v shellcheck
-
       - name: Parse and lint scripts
         run: |
           set -euo pipefail
           bash -n tools/sync-common.sh
           bash -n tools/test-sync-common.sh
           shellcheck tools/sync-common.sh tools/test-sync-common.sh
-
-      - name: Exercise refusal, dry-run, deletion, and receipt behavior
+      - name: Exercise propagation contract
         run: bash tools/test-sync-common.sh

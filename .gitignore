@@ -6,3 +6,9 @@ local.properties
 captures/
 .cxx/
 .kotlin/
+
+# Signing private keys
+*.jks
+*.p12
+*.pfx
+*.keystore
