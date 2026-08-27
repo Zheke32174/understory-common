@@ -86,9 +86,9 @@ object SuiteCapabilityRegistry {
             1 to setOf(SuiteCapability.BACKUP_ENVELOPE),
         ),
         "com.understory.browser" to mapOf(
-            // v1 offers no peer-facing surface (share-target/VIEW intake
-            // not yet built). Empty set, not omitted, so the peer is still
-            // discovered, cert-checked, and tier-counted — just inert.
+            // v1 has user-facing SEND intake and an opt-in VIEW alias, but no
+            // peer-facing surface matching HARDENED_BROWSER. Keep the row
+            // recognized and intentionally capability-empty.
             1 to emptySet(),
         ),
         "com.understory.antivirus" to mapOf(
@@ -153,12 +153,13 @@ object SuiteCapabilityRegistry {
         }
 
         /**
-         * Peers that returned a version we don't recognize (peer is newer
-         * or older than this consumer's KNOWN_PEERS entry). Useful for
-         * surfacing "update available" prompts.
+         * Cert-verified peers whose provider returned a version this consumer
+         * does not recognize. A recognized peer may intentionally expose zero
+         * capabilities (Browser v1), so capability emptiness is NOT evidence
+         * of an unknown version.
          */
         val unknownVersionPeers: List<String> get() =
-            peers.filter { it.certVerified && it.capabilities.isEmpty() }
+            peers.filter { it.certVerified && !it.versionRecognized }
                 .map { it.packageName }
     }
 
@@ -201,8 +202,9 @@ object SuiteCapabilityRegistry {
             // Step 4: translate (peer, version) into local capability set.
             //         An unknown version yields the empty set, which is
             //         the safe default — peer is "seen but inert".
-            val caps = if (certVerified && attestedVersion >= 0) {
-                versionTable[attestedVersion] ?: emptySet()
+            val versionRecognized = attestedVersion >= 0 && versionTable.containsKey(attestedVersion)
+            val caps = if (certVerified && versionRecognized) {
+                versionTable.getValue(attestedVersion)
             } else {
                 emptySet()
             }
@@ -210,6 +212,7 @@ object SuiteCapabilityRegistry {
             peerInfos += PeerInfo(
                 packageName = peerPkg,
                 attestedVersion = attestedVersion,
+                versionRecognized = versionRecognized,
                 capabilities = caps,
                 certVerified = certVerified,
             )

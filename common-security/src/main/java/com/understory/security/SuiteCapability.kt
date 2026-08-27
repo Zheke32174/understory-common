@@ -128,9 +128,17 @@ data class PeerInfo(
     /** Version the peer's provider attested to (raw, untranslated). */
     val attestedVersion: Int,
     /**
+     * True when [attestedVersion] has an explicit row in the consumer's
+     * locally compiled KNOWN_PEERS table. This is deliberately independent
+     * of [capabilities]: a recognized version may honestly provide an empty
+     * capability set (Browser v1 does), while an unrecognized version must
+     * remain distinguishable from that valid inert state.
+     */
+    val versionRecognized: Boolean = true,
+    /**
      * Capabilities the consumer's local KNOWN_PEERS map associates with
-     * this (package, version) pair. Empty if the version is unknown
-     * (peer is newer than this consumer).
+     * this (package, version) pair. Empty if the version is unknown OR if
+     * this recognized version intentionally exposes no peer-facing power.
      */
     val capabilities: Set<SuiteCapability>,
     /**
